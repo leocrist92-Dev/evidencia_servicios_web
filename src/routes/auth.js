@@ -1,45 +1,46 @@
 const express = require('express');
 const router = express.Router();
 
-// Base de datos simulada en memoria para almacenar los registros
-const usuariosRegistrados = [
-    { usuario: 'juan.perez', contrasena: 'Perez123*' },
-    { usuario: 'maria.gomez', contrasena: 'Maria2024!' },
-    { usuario: 'carlos.rodriguez', contrasena: 'ClaveSegura#1' },
-    { usuario: 'ana.martinez', contrasena: 'AnaM9876' },
-    { usuario: 'luis.hernandez', contrasena: 'LuisPass2024' }
-];
+// Importamos el modelo/esquema del usuario
+const Usuario = require('../models/Usuario');
 
 // Servicio web para el registro de un usuario
-router.post('/registro', (req, res) => {
-    // Se extraen los datos enviados en el cuerpo de la petición POST
-    const nuevoUsuario = {
-        usuario: req.body.usuario,
-        contrasena: req.body.contrasena
-    };
+router.post('/registro', async (req, res) => {
+    try {
+        const { usuario, contrasena } = req.body;
 
-    // Se guarda el usuario en el arreglo simulando una base de datos
-    usuariosRegistrados.push(nuevoUsuario);
+        // Se verifica si el usuario ya existe previamente en la colección
+        const usuarioExistente = await Usuario.findOne({ usuario });
+        if (usuarioExistente) {
+            return res.status(400).json({ error: 'El usuario ya se encuentra registrado' });
+        }
 
-    res.json({ mensaje: 'Usuario registrado correctamente' });
+        // Se crea el documento con el modelo e inserta en la base de datos
+        const nuevoUsuario = new Usuario({ usuario, contrasena });
+        await nuevoUsuario.save();
+
+        res.json({ mensaje: 'Usuario registrado correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error interno al registrar el usuario' });
+    }
 });
 
 // Servicio web para el inicio de sesión
-router.post('/login', (req, res) => {
-    // Se capturan las credenciales ingresadas por el cliente
-    const usuarioIngresado = req.body.usuario;
-    const contrasenaIngresada = req.body.contrasena;
+router.post('/login', async (req, res) => {
+    try {
+        const { usuario, contrasena } = req.body;
 
-    // Se valida si existe un registro que coincida exactamente con el usuario y la contraseña
-    const usuarioValido = usuariosRegistrados.find(
-        (user) => user.usuario === usuarioIngresado && user.contrasena === contrasenaIngresada
-    );
+        // Búsqueda en MongoDB de un registro que coincida con las credenciales
+        const usuarioValido = await Usuario.findOne({ usuario, contrasena });
 
-    // Si la autenticación es correcta sale un mensaje satisfactorio, de lo contrario devuelve error
-    if (usuarioValido) {
-        res.send('Autenticación satisfactoria');
-    } else {
-        res.status(401).send('Error en la autenticación');
+        // Si la autenticación es correcta sale un mensaje satisfactorio, de lo contrario error
+        if (usuarioValido) {
+            res.send('Autenticación satisfactoria');
+        } else {
+            res.status(401).send('Error en la autenticación');
+        }
+    } catch (error) {
+        res.status(500).send('Error interno en el servidor');
     }
 });
 
