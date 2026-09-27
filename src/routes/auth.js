@@ -2,7 +2,13 @@ const express = require('express');
 const router = express.Router();
 
 // Base de datos simulada en memoria para almacenar los registros
-const usuariosRegistrados = [];
+const usuariosRegistrados = [
+    { usuario: 'juan.perez', contrasena: 'Perez123*' },
+    { usuario: 'maria.gomez', contrasena: 'Maria2024!' },
+    { usuario: 'carlos.rodriguez', contrasena: 'ClaveSegura#1' },
+    { usuario: 'ana.martinez', contrasena: 'AnaM9876' },
+    { usuario: 'luis.hernandez', contrasena: 'LuisPass2024' }
+];
 
 // Servicio web para el registro de un usuario
 router.post('/registro', (req, res) => {
